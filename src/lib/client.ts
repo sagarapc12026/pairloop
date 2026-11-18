@@ -2,11 +2,13 @@
 import useSWR, { mutate } from "swr";
 import type { AppNotification, MeResponse, Task, Wish } from "./types";
 
-export class ApiError extends Error {
-  constructor(message: string, public status: number, public code?: string) { super(message); }
-}
+import { ApiError, DEMO } from "./errors";
+import { demoApi } from "./demo";
+
+export { ApiError, DEMO };
 
 export async function api<T = unknown>(url: string, opts: { method?: string; body?: unknown } = {}): Promise<T> {
+  if (DEMO) return demoApi<T>(url, opts.method ?? (opts.body ? "POST" : "GET"), (opts.body ?? {}) as Record<string, unknown>);
   const res = await fetch(url, {
     method: opts.method ?? (opts.body ? "POST" : "GET"),
     headers: opts.body ? { "Content-Type": "application/json" } : undefined,

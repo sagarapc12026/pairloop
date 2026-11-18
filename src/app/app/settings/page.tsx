@@ -7,7 +7,7 @@ import { useApp } from "@/components/AppContext";
 import { InviteActions } from "@/components/InviteCard";
 import { startCheckout } from "@/components/Paywall";
 import { Avatar, Button, Field, inputCls } from "@/components/ui";
-import { api } from "@/lib/client";
+import { api, DEMO } from "@/lib/client";
 import { PALETTE, firstName } from "@/lib/people";
 import { currentSubscription, disablePush, enablePush, isIOSNotInstalled, pushSupported } from "@/lib/push";
 
@@ -25,6 +25,7 @@ export default function Settings() {
       mutate("/api/me");
     }
     (async () => {
+      if (DEMO) return setPush("unsupported");
       if (isIOSNotInstalled()) return setPush("ios");
       if (!pushSupported()) return setPush("unsupported");
       if (Notification.permission === "denied") return setPush("blocked");
@@ -86,7 +87,7 @@ export default function Settings() {
             <p className="text-[13px] text-muted">
               {push === "ios" ? "On iPhone, tap Share then “Add to Home Screen”, open Pairloop from there, and turn this on."
                 : push === "blocked" ? "Notifications are blocked for this site. Allow them in your browser settings, then come back."
-                : push === "unsupported" ? "This browser can't receive push notifications. You'll still see updates inside the app."
+                : push === "unsupported" ? (DEMO ? "Phone notifications need the full version with a database. In the demo, updates and priority alerts show inside the app." : "This browser can't receive push notifications. You'll still see updates inside the app.")
                 : "Get told when tasks are handed to you or finished, and get priority reminders 15, 10 and 5 minutes before."}
             </p>
           </div>
@@ -120,7 +121,7 @@ export default function Settings() {
               <div className="h-full rounded-full" style={{ width: `${(used / space.freeLimit) * 100}%`, background: used >= space.freeLimit ? "var(--urgent)" : "var(--ink)" }} />
             </div>
             <div className="mt-4 flex items-center gap-3">
-              <p className="flex-1 text-[13px] text-muted">Premium is $19.99 a year for both of you, with unlimited tasks.</p>
+              <p className="flex-1 text-[13px] text-muted">Premium is $19.99 a year for both of you, with unlimited tasks.{DEMO ? " In the demo this unlocks for free." : ""}</p>
               <Button size="sm" loading={busy === "checkout"} onClick={async () => { setBusy("checkout"); try { await startCheckout(); } catch (e) { toast.error((e as Error).message); setBusy(null); } }}>Go Premium</Button>
             </div>
             <button onClick={() => openPaywall()} className="mt-2 text-[13px] font-semibold text-ink-2 underline-offset-2 hover:underline">What&apos;s included</button>
@@ -147,11 +148,11 @@ export default function Settings() {
           </div>
           <Button type="submit" variant="soft" loading={busy === "profile"}>Save profile</Button>
         </form>
-        <p className="mt-4 text-[13px] text-muted">Signed in as {me.email}</p>
+        {!DEMO ? <p className="mt-4 text-[13px] text-muted">Signed in as {me.email}</p> : null}
       </Section>
 
       <div className="mt-6 mb-4 px-1">
-        <Button variant="danger" onClick={async () => { await api("/api/auth/logout", { body: {} }); location.href = "/"; }}><LogOut size={16} /> Sign out</Button>
+        <Button variant="danger" onClick={async () => { await api("/api/auth/logout", { body: {} }); location.href = "/"; }}><LogOut size={16} /> {DEMO ? "Leave demo" : "Sign out"}</Button>
       </div>
     </div>
   );

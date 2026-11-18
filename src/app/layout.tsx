@@ -25,7 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         {children}
-        <Toaster position="top-center" toastOptions={{ style: { borderRadius: 16, fontFamily: "var(--font-sans)" } }} />
+        <Toaster position="bottom-center" offset={24} mobileOffset={{ bottom: 92 }} toastOptions={{ style: { borderRadius: 16, fontFamily: "var(--font-sans)" } }} />
       </body>
     </html>
   );

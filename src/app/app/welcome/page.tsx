@@ -8,10 +8,13 @@ import { LogoMark } from "@/components/Logo";
 import { Button } from "@/components/ui";
 import { enablePush, pushSupported } from "@/lib/push";
 import { firstName } from "@/lib/people";
+import { DEMO } from "@/lib/client";
+import { useEffect } from "react";
 
 export default function Welcome() {
   const { data } = useApp();
   const [pushState, setPushState] = useState<"idle" | "on" | "no">("idle");
+  useEffect(() => { if (DEMO) location.replace("/app"); }, []);
   return (
     <div className="mx-auto max-w-md px-5 pt-6 md:pt-16">
       <LogoMark size={52} />

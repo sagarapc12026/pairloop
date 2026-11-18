@@ -12,7 +12,8 @@ import { Paywall } from "./Paywall";
 import { UrgentAlert } from "./UrgentAlert";
 import { Avatar } from "./ui";
 import { Logo, LogoMark } from "./Logo";
-import { api, useMe } from "@/lib/client";
+import { api, useMe, DEMO } from "@/lib/client";
+import { DemoBar } from "./DemoBar";
 import { registerSW, syncPush } from "@/lib/push";
 import type { Member } from "@/lib/types";
 
@@ -33,7 +34,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   // Service worker + reminder heartbeat (keeps priority reminders flowing even without a cron job).
   useEffect(() => {
-    registerSW()?.then(() => syncPush()).catch(() => {});
+    if (!DEMO) registerSW()?.then(() => syncPush()).catch(() => {});
     const tick = () => document.visibilityState === "visible" && api("/api/reminders/tick", { body: {} }).catch(() => {});
     tick();
     const id = setInterval(tick, 30_000);
@@ -119,7 +120,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </button>
         </header>
 
-        <main className="min-w-0 flex-1 pb-28 md:pb-10">{children}</main>
+        <main className="min-w-0 flex-1 pb-28 md:pb-10">{DEMO ? <DemoBar /> : null}{children}</main>
 
         {/* Mobile bottom nav */}
         <nav className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 backdrop-blur md:hidden" aria-label="Main">
@@ -139,7 +140,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <TaskSheet id={taskId} onClose={() => setTaskId(null)} />
       <NotificationsSheet open={notifOpen} onClose={() => setNotifOpen(false)} />
       <Paywall open={!!paywall} reason={paywall ?? undefined} onClose={() => setPaywall(null)} used={data.space.tasksCreated} limit={data.space.freeLimit} />
-      <UrgentAlert />
+      <UrgentAlert key={data.me.id} />
     </Ctx.Provider>
   );
 }

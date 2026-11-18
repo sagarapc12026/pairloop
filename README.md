@@ -44,7 +44,8 @@ You need a Postgres database. A free Neon database works, or local Postgres.
    - `FREE_TASK_LIMIT`: `10`
 5. **Deploy.** The build runs `prisma migrate deploy`, so tables are created automatically.
 
-> **Deploying before you have a database?** That's fine. The build skips migrations, the site and landing page load, and sign-up shows a "not connected yet" message. Add `DATABASE_URL` later and redeploy.
+> **Deploying before you have a database? You get demo mode.** With no database configured, the app runs entirely in the browser: "Explore the demo" signs you in to a sample loop, every screen works, and data is kept only in that browser's localStorage (nothing reaches the server). A demo bar lets you switch to the partner's view or reset. Push notifications to phones, partner invites and real payments need the full version; in the demo, "Go Premium" unlocks Premium locally.
+> Demo mode turns off automatically once you add `DATABASE_URL` and redeploy. You can also force it with `DEMO_MODE=1` (or off with `DEMO_MODE=0`). The Vercel build log prints `[pairloop] demo mode: ON/off`.
 > The build accepts `DATABASE_URL`, `POSTGRES_PRISMA_URL` or `POSTGRES_URL` for the main connection, and `DATABASE_URL_UNPOOLED`, `POSTGRES_URL_NON_POOLING` or `DIRECT_URL` for migrations. With only a Neon pooled URL, it works out the direct one by itself.
 
 ### Priority reminders (important)

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { use, useEffect, useState } from "react";
 import { AuthCard } from "@/components/AuthCard";
 import { Button, Field, inputCls } from "@/components/ui";
-import { api } from "@/lib/client";
+import { api, DEMO } from "@/lib/client";
 
 type Invite = { inviter: string; loopName: string; full: boolean };
 
@@ -16,6 +16,7 @@ export default function Join({ params }: { params: Promise<{ code: string }> }) 
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
+    if (DEMO) return;
     api<Invite>(`/api/invite/${code}`).then(setInvite).catch((e) => setLoadErr(e.message));
   }, [code]);
 
@@ -32,6 +33,7 @@ export default function Join({ params }: { params: Promise<{ code: string }> }) 
     }
   }
 
+  if (DEMO) return <AuthCard title="Invites aren't on yet" sub="This copy of Pairloop is running as a demo, so partner invites are switched off. You can still explore everything." foot={<Link href="/login" className="font-semibold text-ink">Explore the demo</Link>}>{null}</AuthCard>;
   if (loadErr) return <AuthCard title="This link doesn't work" sub={loadErr} foot={<Link href="/" className="font-semibold text-ink">Go to Pairloop</Link>}>{null}</AuthCard>;
   if (!invite) return <AuthCard title="Opening your invite…">{null}</AuthCard>;
   if (invite.full) return <AuthCard title="This loop is full" sub="It already has two people in it. Ask for a fresh invite, or start your own." foot={<Link href="/signup" className="font-semibold text-ink">Start a loop</Link>}>{null}</AuthCard>;
