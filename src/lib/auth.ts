@@ -43,6 +43,13 @@ export function handle<A extends unknown[]>(fn: (...args: A) => Promise<Response
       if (e instanceof HttpError) {
         return NextResponse.json({ error: e.message, code: e.code }, { status: e.status });
       }
+      const name = (e as { name?: string })?.name ?? "";
+      if (name === "PrismaClientInitializationError" || /AUTH_SECRET is not set/.test(String((e as Error)?.message))) {
+        return NextResponse.json(
+          { error: "Pairloop isn't connected to its database yet, so accounts can't be created. Check back soon." },
+          { status: 503 },
+        );
+      }
       if (e && typeof e === "object" && "issues" in e) {
         return NextResponse.json({ error: "Some fields look off. Check them and try again." }, { status: 400 });
       }

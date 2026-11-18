@@ -44,6 +44,9 @@ You need a Postgres database. A free Neon database works, or local Postgres.
    - `FREE_TASK_LIMIT`: `10`
 5. **Deploy.** The build runs `prisma migrate deploy`, so tables are created automatically.
 
+> **Deploying before you have a database?** That's fine. The build skips migrations, the site and landing page load, and sign-up shows a "not connected yet" message. Add `DATABASE_URL` later and redeploy.
+> The build accepts `DATABASE_URL`, `POSTGRES_PRISMA_URL` or `POSTGRES_URL` for the main connection, and `DATABASE_URL_UNPOOLED`, `POSTGRES_URL_NON_POOLING` or `DIRECT_URL` for migrations. With only a Neon pooled URL, it works out the direct one by itself.
+
 ### Priority reminders (important)
 
 Reminders are sent by `GET /api/cron/reminders`, which must be called **every minute**:
