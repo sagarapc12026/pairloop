@@ -1,36 +1,88 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Pairloop
 
-## Getting Started
+**One list for the two of you.** Shared tasks, priority reminders that keep nudging, a shared calendar, a dashboard, and wishlists for partners.
 
-First, run the development server:
+- **Type or say a task.** "Sam pick up kids today at 3pm urgent" becomes a priority task for Sam, due today at 3 PM. Review the details, then save.
+- **Shared or private.** Every task is visible to both partners unless marked private.
+- **Assign** to yourself, your partner, or both. Completing a task notifies the other person.
+- **Priority reminders** go to both phones 15, 10 and 5 minutes before the due time, at the due time, then every 10 minutes (for up to 2 hours) until someone marks it done or turns reminders off. Notifications have **Mark done** and **Stop reminders** buttons.
+- **Calendar** of every dated task. **Dashboard** with totals, completed, priority, overdue, and who's carrying what.
+- **Wishlists** (shopping, travel, date night, home, other). Both partners see them and either can say "I'll make it happen". Only the person who made a wish can remove it or mark it as come true.
+- **Freemium.** One person signs up and shares an invite link. Free covers both partners for the first 10 tasks; Premium is $19.99/year for the pair (Stripe).
+- **Installable PWA** with Web Push (Android, desktop, and iPhone on iOS 16.4+ once added to the Home Screen).
+
+Stack: Next.js 15 (App Router) · TypeScript · Tailwind CSS 4 · Prisma + Postgres · Web Push (VAPID) · Stripe · chrono-node (date parsing) · Web Speech API (voice).
+
+---
+
+## Run locally
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env        # fill in the values (see comments in the file)
+npm install
+npx prisma migrate dev      # creates the tables
+npm run dev                 # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+You need a Postgres database. A free Neon database works, or local Postgres.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deploy: GitHub → Vercel
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **Push to GitHub**
+   ```bash
+   git remote add origin https://github.com/<you>/pairloop.git
+   git push -u origin main
+   ```
+2. **Import into Vercel**: vercel.com → *Add New → Project* → pick the repo. Framework is detected as Next.js.
+3. **Add a database**: in the Vercel project, *Storage → Create → Neon (Postgres)*, and connect it to the project. This sets `DATABASE_URL` and `DATABASE_URL_UNPOOLED`.
+4. **Environment variables** (*Settings → Environment Variables*). Add everything else from `.env.example`:
+   - `AUTH_SECRET`: `openssl rand -hex 32`
+   - `CRON_SECRET`: `openssl rand -hex 16`
+   - `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`: from `npx web-push generate-vapid-keys`
+   - `VAPID_SUBJECT`: `mailto:you@yourdomain.com`
+   - `NEXT_PUBLIC_APP_URL`: your production URL
+   - `FREE_TASK_LIMIT`: `10`
+5. **Deploy.** The build runs `prisma migrate deploy`, so tables are created automatically.
 
-## Learn More
+### Priority reminders (important)
 
-To learn more about Next.js, take a look at the following resources:
+Reminders are sent by `GET /api/cron/reminders`, which must be called **every minute**:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Easiest (free):** create a job on [cron-job.org](https://cron-job.org) that runs every minute and calls
+  `https://YOUR-APP/api/cron/reminders?secret=YOUR_CRON_SECRET`
+- **Vercel Pro:** add a `vercel.json` with `{"crons":[{"path":"/api/cron/reminders","schedule":"* * * * *"}]}`. Vercel sends `CRON_SECRET` automatically. (Hobby plans only allow daily crons, so a per-minute cron will fail the deploy there.)
+- **Backup:** `.github/workflows/reminders.yml` pings every ~5 minutes if you add `APP_URL` and `CRON_SECRET` as GitHub repo secrets.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+While either partner has the app open, it also triggers reminders itself every 30 seconds, so reminders still fire with no cron set up, just less reliably.
 
-## Deploy on Vercel
+### Payments (Stripe)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Add `STRIPE_SECRET_KEY` (start with a test key).
+2. Stripe Dashboard → *Developers → Webhooks* → add endpoint `https://YOUR-APP/api/stripe/webhook` with events
+   `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`. Put its signing secret in `STRIPE_WEBHOOK_SECRET`.
+3. Enable the Customer Portal (*Settings → Billing → Customer portal*) so subscribers can manage or cancel.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Without Stripe keys the app works fully. "Go Premium" shows a message saying payments aren't set up yet.
+
+## How the freemium rules work
+
+| | Free | Premium ($19.99/yr) |
+|---|---|---|
+| Partners per loop | 2 | 2 |
+| Tasks | 10 created in total | Unlimited |
+| Reminders, calendar, dashboard, wishlists | Yes | Yes |
+
+The count is of tasks *created*, so deleting tasks doesn't reset it. Change `FREE_TASK_LIMIT` to adjust it. The logic is in `src/lib/plan.ts`.
+
+## Project map
+
+```
+prisma/schema.prisma           data model (Space = a couple's "loop")
+src/lib/parse.ts               natural-language task parser (runs in the browser)
+src/lib/reminders.ts           priority reminder schedule + sender (idempotent)
+src/lib/notify.ts              in-app notifications + Web Push fan-out
+src/app/api/*                  REST endpoints
+src/app/app/*                  the signed-in app (tasks, calendar, wishlist, dashboard, settings)
+src/components/Composer.tsx    quick add: type or speak, review, save
+public/sw.js                   service worker (push + notification actions)
+```

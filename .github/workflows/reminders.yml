@@ -1,0 +1,20 @@
+# Optional backup pinger for priority reminders.
+# GitHub runs schedules every ~5 minutes at best (often later), so use cron-job.org
+# (every minute) as the main trigger and keep this as a safety net.
+# Needs repo secrets: APP_URL (e.g. https://pairloop.vercel.app) and CRON_SECRET.
+name: reminders
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger reminder run
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$APP_URL" ] || [ -z "$CRON_SECRET" ]; then echo "Secrets not set; skipping."; exit 0; fi
+          curl -fsS -H "Authorization: Bearer $CRON_SECRET" "$APP_URL/api/cron/reminders"

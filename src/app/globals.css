@@ -1,26 +1,136 @@
 @import "tailwindcss";
+@import "@fontsource-variable/bricolage-grotesque";
+@import "@fontsource/instrument-sans/400.css";
+@import "@fontsource/instrument-sans/500.css";
+@import "@fontsource/instrument-sans/600.css";
+
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  --bg: #f3f5fb;
+  --surface: #ffffff;
+  --surface-2: #eceff7;
+  --ink: #161a33;
+  --ink-2: #474d70;
+  --muted: #767c9c;
+  --line: #e0e4ef;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --lagoon: #00897b;
+  --lagoon-soft: #d6f1ee;
+  --orchid: #a03fae;
+  --orchid-soft: #f4e2f6;
+  --sun: #c27a00;
+  --sun-soft: #fdf0d2;
+  --moss: #437f26;
+  --moss-soft: #e3f1d8;
+
+  --urgent: #e0393f;
+  --urgent-soft: #ffe4e5;
+  --ok: #1f925a;
+
+  --shadow-lift: 0 1px 0 rgba(22, 26, 51, 0.04), 0 8px 24px -12px rgba(22, 26, 51, 0.18);
+  --shadow-sheet: 0 -12px 48px -16px rgba(22, 26, 51, 0.35);
+  color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --bg: #0e1122;
+    --surface: #161a31;
+    --surface-2: #1e233e;
+    --ink: #eef0fa;
+    --ink-2: #bcc1dc;
+    --muted: #8a90b2;
+    --line: #2a2f4e;
+    --lagoon: #12a893;
+    --lagoon-soft: #123638;
+    --orchid: #bf6bcf;
+    --orchid-soft: #3a2143;
+    --sun: #f2b64a;
+    --sun-soft: #3b2e12;
+    --moss: #8fcf6a;
+    --moss-soft: #1f3317;
+    --urgent: #ff6b70;
+    --urgent-soft: #3f1b22;
+    --ok: #4cc988;
+    --shadow-lift: 0 1px 0 rgba(0, 0, 0, 0.2), 0 10px 28px -14px rgba(0, 0, 0, 0.6);
+    --shadow-sheet: 0 -12px 48px -12px rgba(0, 0, 0, 0.7);
+    color-scheme: dark;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-lagoon: var(--lagoon);
+  --color-lagoon-soft: var(--lagoon-soft);
+  --color-orchid: var(--orchid);
+  --color-orchid-soft: var(--orchid-soft);
+  --color-sun: var(--sun);
+  --color-sun-soft: var(--sun-soft);
+  --color-moss: var(--moss);
+  --color-moss-soft: var(--moss-soft);
+  --color-urgent: var(--urgent);
+  --color-urgent-soft: var(--urgent-soft);
+  --color-ok: var(--ok);
+  --font-display: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  letter-spacing: -0.02em;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+.tabular { font-variant-numeric: tabular-nums; }
+
+.pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+.pt-safe { padding-top: env(safe-area-inset-top); }
+
+/* Sheet / dialog motion: answers a user action, so it's welcome. */
+@keyframes sheet-in { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pop { 0% { transform: scale(0.6); } 60% { transform: scale(1.15); } 100% { transform: scale(1); } }
+@keyframes ring { 0%, 100% { transform: rotate(0); } 15% { transform: rotate(14deg); } 30% { transform: rotate(-12deg); } 45% { transform: rotate(8deg); } 60% { transform: rotate(-4deg); } }
+@keyframes pulse-dot { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--urgent) 50%, transparent); } 100% { box-shadow: 0 0 0 10px transparent; } }
+.anim-sheet { animation: sheet-in 260ms cubic-bezier(0.2, 0.9, 0.25, 1); }
+.anim-fade { animation: fade-in 180ms ease-out; }
+.anim-pop { animation: pop 320ms cubic-bezier(0.3, 1.4, 0.5, 1); }
+.anim-ring { animation: ring 1.2s ease-in-out infinite; transform-origin: 50% 10%; }
+.anim-pulse { animation: pulse-dot 1.6s ease-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; }
+}
+
+/* Hide number-input spinners & tidy native date/time pickers */
+input[type="date"], input[type="time"] { font-family: inherit; }
+input::-webkit-calendar-picker-indicator { opacity: 0.6; cursor: pointer; }
+@media (prefers-color-scheme: dark) { input::-webkit-calendar-picker-indicator { filter: invert(1); } }
